@@ -11,7 +11,7 @@ order: 1
 composer require omnibill/chorus-pro
 ```
 
-PHP 8.2 or later, `glitchr/omnibill` and `symfony/http-client`. A PISTE application subscribed to
+PHP 8.2 or later, `omniscient/omnibill` and `symfony/http-client`. A PISTE application subscribed to
 the Chorus Pro APIs, and a Chorus Pro technical account attached to the supplier's structure (see
 Chorus Pro's guides "Se raccorder à Chorus Pro" and "création d'un compte technique").
 
