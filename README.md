@@ -1,7 +1,7 @@
 # omnibill/chorus-pro
 
 **Chorus Pro**, the French public sector's invoicing portal, for
-[omniscient/omnibill](https://github.com/glitchr-studio/omnibill), through PISTE: a supplier's
+[omnisense/omnibill](https://github.com/glitchr-omnisense/omnibill), through PISTE: a supplier's
 invoices to public entities (B2G), deposited as flows (`deposer/flux`) and followed
 (`rechercher/fournisseur`).
 

@@ -10,7 +10,7 @@
         "b2g",
         "omnibill"
     ],
-    "homepage": "https://github.com/glitchr-studio/omnibill-chorus-pro",
+    "homepage": "https://github.com/glitchr-omnisense/omnibill-chorus-pro",
     "license": "MIT",
     "authors": [
         {
@@ -20,7 +20,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "omniscient/omnibill": "^1.0@dev",
+        "omnisense/omnibill": "^1.0@dev",
         "symfony/http-client": "^6.4|^7.0|^8.0"
     },
     "require-dev": {
