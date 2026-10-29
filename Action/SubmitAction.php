@@ -46,7 +46,8 @@ final class SubmitAction implements ActionInterface, ApiAwareInterface
             'syntaxeFlux' => $syntax,
             'avecSignature' => false,
         ]);
-        $deposited = isset($data['dateDepot']) ? (new \DateTimeImmutable((string) $data['dateDepot'])) : new \DateTimeImmutable();
+        // Unread (none, or a form PHP cannot read): the time of the deposit.
+        $deposited = self::date($data['dateDepot'] ?? null) ?? new \DateTimeImmutable();
         $request->setResult(new Flow(
             reference: (string) ($data['numeroFluxDepot'] ?? ''),
             kind: FlowKind::INVOICE,
@@ -65,5 +66,15 @@ final class SubmitAction implements ActionInterface, ApiAwareInterface
     public static function defaults(): array
     {
         return [Syntax::FACTURX->value => 'IN_DP_E2_CII_FACTURX', Syntax::UBL->value => 'IN_DP_E1_UBL_INVOICE', Syntax::CII->value => 'IN_DP_E1_CII_16B'];
+    }
+
+    /** A date as Chorus Pro writes it; null when PHP cannot read it. */
+    private static function date(mixed $value): ?\DateTimeImmutable
+    {
+        try {
+            return \is_string($value) && '' !== trim($value) ? new \DateTimeImmutable($value) : null;
+        } catch (\Exception) {
+            return null;
+        }
     }
 }

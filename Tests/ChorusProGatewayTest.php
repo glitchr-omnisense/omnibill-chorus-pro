@@ -103,6 +103,21 @@ final class ChorusProGatewayTest extends TestCase
         $gateway->fetchStatus(new Flow('CPP0021100000000000000099'));
     }
 
+    /** A date Chorus Pro writes in a way PHP cannot read is no date, not PHP's own exception: the deposit is kept. */
+    public function testADateItCannotReadIsNoDate(): void
+    {
+        $json = static fn (string $fixture, string $from, string $to) => new MockResponse(str_replace($from, $to, (string) file_get_contents(__DIR__.'/Fixtures/'.$fixture.'.json')));
+        $gateway = $this->gateway([$json('deposer-flux', '"2026-10-08"', '"08/10/2026 ??"'), $json('rechercher-fournisseur', '"2026-10-08T10:12:00+02:00"', '"hier"')]);
+
+        $flow = $gateway->submit(self::invoice());
+        self::assertSame('CPP0021100000000000000023', $flow->reference);
+        self::assertNotNull($flow->submittedAt, 'unread: the time of the deposit, as without one');
+
+        $found = $gateway->fetchStatus($flow);
+        self::assertSame(LifecycleStatus::MADE_AVAILABLE, $found->status);
+        self::assertNull($found->history[0]->at);
+    }
+
     public function testChorusProsErrorsAndRefusals(): void
     {
         try {

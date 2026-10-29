@@ -49,11 +49,21 @@ final class FetchStatusAction implements ActionInterface, ApiAwareInterface
         $invoice = $mine[0];
         $code = isset($invoice['statut']) ? (string) $invoice['statut'] : null;
         $status = Statuses::of($code);
-        $at = isset($invoice['dateHeureEtatCourant']) ? (new \DateTimeImmutable((string) $invoice['dateHeureEtatCourant'])) : null;
+        $at = self::date($invoice['dateHeureEtatCourant'] ?? null);
         $history = $flow->history;
         if (null !== $status && (!$history || $history[array_key_last($history)]->code !== $code)) {
             $history[] = new StatusChange($status, $number, $at, $invoice['commentaireEtatCourant'] ?? null, code: $code);
         }
         $request->setResult($flow->with(state: FlowState::ACCEPTED, status: $status ?? $flow->status, history: $history, updatedAt: $at, data: ['facture' => $invoice] + $flow->data));
+    }
+
+    /** A date as Chorus Pro writes it; null when PHP cannot read it. */
+    private static function date(mixed $value): ?\DateTimeImmutable
+    {
+        try {
+            return \is_string($value) && '' !== trim($value) ? new \DateTimeImmutable($value) : null;
+        } catch (\Exception) {
+            return null;
+        }
     }
 }

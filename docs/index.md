@@ -169,8 +169,9 @@ omnibill:
 | 5xx, 429, no answer, a timeout (10 s) | `UnreachableException` |
 | a syntax without a `syntaxeFlux`; a flow without an invoice number for `fetchStatus()` | `InvalidConfigException`, before any call |
 
-> [!WARNING]
-> Known defect: a `dateDepot` or `dateHeureEtatCourant` PHP cannot read as a date throws PHP's own `\Exception` (`new \DateTimeImmutable()` in `SubmitAction` and `FetchStatusAction`), where an `OmnibillException` or a null date is expected.
+A `dateDepot` or `dateHeureEtatCourant` PHP cannot read as a date is no date: the flow's
+`submittedAt` is then the time of the deposit (as without a `dateDepot`), the status change's
+`at` null; the deposit is kept rather than lost to an exception.
 
 ## Verified, and not
 
