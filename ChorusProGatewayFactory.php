@@ -9,6 +9,7 @@ use Omnibill\GatewayFactory;
 use Omnibill\Http\ClientCredentials;
 use Omnibill\Model\Capabilities;
 use Omnibill\Model\Syntax;
+use Omnisense\Contracts\Policy\UsagePolicy;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -34,8 +35,16 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class ChorusProGatewayFactory extends GatewayFactory
 {
+    private static ?UsagePolicy $policy = null;
+
     public function __construct(private readonly ?HttpClientInterface $http = null)
     {
+    }
+
+    /** Its usage policy, as policy.json declares it (read once). */
+    public static function usagePolicy(): UsagePolicy
+    {
+        return self::$policy ??= UsagePolicy::fromFile(__DIR__.'/policy.json');
     }
 
     protected function populateConfig(Config $config): void
@@ -50,17 +59,18 @@ final class ChorusProGatewayFactory extends GatewayFactory
             'api_url' => null,
             'oauth_url' => null,
             // 10 MB a file uncompressed, 30 MB compressed (annex on the API services, deposerFluxFacture).
-            'omnibill.capabilities' => new Capabilities([Syntax::FACTURX, Syntax::UBL, Syntax::CII], approved: false, publicSector: true, maxSize: 10 * 1024 * 1024),
+            'omnibill.capabilities' => new Capabilities([Syntax::FACTURX, Syntax::UBL, Syntax::CII], approved: false, publicSector: true, maxSize: 10 * 1024 * 1024, policy: self::usagePolicy()),
             'omnibill.api' => function (Config $c): Api {
                 $http = $this->http ?? HttpClient::create();
                 $sandbox = $c->bool('sandbox');
 
                 return new Api(
                     $http,
-                    new ClientCredentials($http, Api::PROVIDER, (string) ($c->get('oauth_url') ?: ($sandbox ? Api::SANDBOX_OAUTH : Api::OAUTH)), (string) $c['client_id'], (string) $c['client_secret'], 'openid'),
+                    new ClientCredentials($http, Api::PROVIDER, (string) ($c->get('oauth_url') ?: ($sandbox ? Api::SANDBOX_OAUTH : Api::OAUTH)), (string) $c['client_id'], (string) $c['client_secret'], 'openid', null, $c->backoff()),
                     base64_encode($c['login'].':'.$c['password']),
                     rtrim((string) ($c->get('api_url') ?: ($sandbox ? Api::SANDBOX_API : Api::API)), '/'),
                     null !== $c->get('user_id') && '' !== $c->get('user_id') ? (int) $c['user_id'] : null,
+                    $c->backoff(),
                 );
             },
             'omnibill.action.submit' => static fn (Config $c) => new SubmitAction(array_replace(SubmitAction::defaults(), (array) $c['syntaxes'])),

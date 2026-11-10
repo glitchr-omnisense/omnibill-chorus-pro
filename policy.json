@@ -1,0 +1,27 @@
+{
+    "$schema": "https://github.com/glitchr-omnisense/contracts/blob/1.x/resources/usage-policy.schema.json",
+    "provider": "chorus-pro",
+    "rateLimits": null,
+    "rights": {
+        "commercial": "allowed",
+        "openSourceRequired": null,
+        "caching": {
+            "permission": "unknown"
+        },
+        "storage": "unknown",
+        "redistribution": "unknown",
+        "attribution": {
+            "required": false
+        }
+    },
+    "requirements": {
+        "key": true
+    },
+    "provenance": {
+        "terms": "https://piste.gouv.fr/cgu",
+        "policy": "https://portail.chorus-pro.gouv.fr/aife_csm?id=aife_cgu",
+        "notes": "Limits unknown: PISTE's terms (3.1.3) say the AIFE sets each API's usage limits at its discretion and documents them with the API, on the PISTE portal behind an account; none is published openly, so none is declared. Commercial: the terms define an application as one exploiting the APIs 'for commercial purposes or not'. The API key (a PISTE application's client id and secret) must not be shared outside the organisation (3.1.2), and every call also needs a Chorus Pro technical account. The portal's content may not be redistributed without the AIFE's authorisation (2.7), which does not cover the data the APIs return; each API may carry terms of its own. Chorus Pro's own terms (the policy address) did not load on 2026-11-10. Price: not stated in the terms read.",
+        "verifiedAt": "2026-11-10",
+        "declaredBy": "maintainer"
+    }
+}

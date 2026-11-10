@@ -6,6 +6,7 @@ use Omnibill\Exception\InvalidKeyException;
 use Omnibill\Exception\ProviderException;
 use Omnibill\Http\Answer;
 use Omnibill\Http\ClientCredentials;
+use Omnisense\Contracts\Policy\Backoff;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -28,6 +29,7 @@ final class Api
         #[\SensitiveParameter] private readonly string $account,
         public readonly string $apiUrl = self::API,
         public readonly ?int $userId = null,
+        private readonly ?Backoff $backoff = null,
     ) {
     }
 
@@ -43,7 +45,7 @@ final class Api
             $answer = Answer::send($this->http, self::PROVIDER, 'POST', $this->apiUrl.$path, [
                 'headers' => ['Authorization' => 'Bearer '.$this->credentials->token(), 'cpro-account' => $this->account, 'Accept' => 'application/json'],
                 'json' => $body,
-            ]);
+            ], $this->backoff);
             if (401 === $answer->status && 0 === $attempt) {
                 $this->credentials->reset();
                 continue;

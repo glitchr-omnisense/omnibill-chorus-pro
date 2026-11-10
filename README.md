@@ -23,6 +23,13 @@ services. **Not verified in real: no PISTE account.**
 
 [Documentation](docs/index.md): the options, the routes, the statuses' reading, what was verified.
 
+## Usage policy
+
+`policy.json`, read on 2026-11-10 in [PISTE's terms](https://piste.gouv.fr/cgu): commercial use
+allowed, the key (a PISTE application's) never shared outside the organisation; the rate limits are
+set per API by the AIFE and documented behind a PISTE account, so they are declared unknown. A site
+puts its figures in the gateway's `policy` option.
+
 ## Responsibility
 
 This package is an independent, unofficial client: it is not affiliated with, endorsed by or
