@@ -73,7 +73,7 @@ Read on 2026-10-08:
 | | Route | |
 |---|---|---|
 | `submit()` | `POST /cpro/factures/v1/deposer/flux`: `fichierFlux` (base64), `nomFichier`, `syntaxeFlux`, `avecSignature: false` | `numeroFluxDepot` names the flow, `PENDING` |
-| `fetchStatus()` | `POST /cpro/factures/v1/rechercher/fournisseur`: `numeroFacture` | the invoice Chorus Pro integrated - the one from this flow when several bear the number -, its `statut`: `ACCEPTED`, and the status below; not found yet: still `PENDING` |
+| `fetchStatus()` | `POST /cpro/factures/v1/rechercher/fournisseur`: `numeroFacture` | the invoice Chorus Pro integrated - the one from this flow when several bear the number -, its `statut`: `ACCEPTED`, and the status below; not found yet: still `PENDING`. Since omnibill 1.2, then `POST /cpro/factures/v1/consulter/historique`: `idFacture` (its `identifiantFactureCPP`), `paramRechercheHistoStatuts.nbResultatsParPageListeHistoStatut: 100` - every status it went through (`historiquesDesStatuts.histoStatut`: `histoStatutCode`, `histoStatutDatePassage`, `histoStatutCommentaire`), oldest first, as the flow's history; Chorus Pro's own error on that call keeps the current status alone |
 
 Every answer carries `codeRetour` (0: done) and `libelle`; another code is a `ProviderException`
 with it (`20001`, `GDP_MSG_11.022`: the file is too large). HTTP 401 or 403 is an
@@ -166,7 +166,8 @@ omnibill:
 | 403 | `InvalidKeyException` (`PISTE or the technical account refused the call (HTTP 403): <libelle>`) |
 | `codeRetour` other than 0, or another 4xx | `ProviderException` (`/v1/deposer/flux answered 20001: GDP_MSG_11.022`, `providerCode` the code) |
 | a body that is not JSON | `ProviderException` |
-| 5xx, 429, no answer, a timeout (10 s) | `UnreachableException` |
+| a 5xx or a timeout to `deposer/flux` | `OutcomeUnknownException` (an `UnreachableException`): the deposit may be there - Chorus Pro has no search by the application's key: look for the invoice by its number (`fetchStatus()` on a `Flow` with it) before depositing again |
+| 5xx, 429, no answer, a timeout (10 s) to a search; a host that did not resolve | `UnreachableException` |
 | a syntax without a `syntaxeFlux`; a flow without an invoice number for `fetchStatus()` | `InvalidConfigException`, before any call |
 
 A `dateDepot` or `dateHeureEtatCourant` PHP cannot read as a date is no date: the flow's

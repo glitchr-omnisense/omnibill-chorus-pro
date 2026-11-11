@@ -100,14 +100,18 @@ final class ChorusProGatewayTest extends TestCase
 
     public function testTheInvoicesStatusIsChorusProsReadAsTheReforms(): void
     {
-        $gateway = $this->gateway(['deposer-flux', 'rechercher-fournisseur-vide', 'rechercher-fournisseur']);
+        $gateway = $this->gateway(['deposer-flux', 'rechercher-fournisseur-vide', 'rechercher-fournisseur', 'consulter-historique']);
         $flow = $gateway->submit(self::invoice());
 
         $still = $gateway->fetchStatus($flow);
         self::assertSame([FlowState::PENDING, null], [$still->state, $still->status], 'not integrated yet');
         $found = $gateway->fetchStatus($flow);
-        self::assertSame([FlowState::ACCEPTED, LifecycleStatus::MADE_AVAILABLE, 'MISE_A_DISPOSITION'], [$found->state, $found->status, $found->history[0]->code]);
-        self::assertSame(['numeroFacture' => 'F-2026-042'], $this->json(\count($this->calls) - 1));
+        self::assertSame([FlowState::ACCEPTED, LifecycleStatus::MADE_AVAILABLE], [$found->state, $found->status]);
+        self::assertSame(['DEPOSEE', 'EN_COURS_ACHEMINEMENT', 'MISE_A_DISPOSITION'], array_map(static fn ($c) => $c->code, $found->history), 'the whole lifecycle, oldest first');
+        self::assertSame([LifecycleStatus::DEPOSITED, '2026-10-08T09:58:00+02:00'], [$found->history[0]->status, $found->history[0]->at?->format(\DATE_ATOM)]);
+        self::assertSame(['numeroFacture' => 'F-2026-042'], $this->json(\count($this->calls) - 2));
+        self::assertSame(['idFacture' => 4321098, 'paramRechercheHistoStatuts' => ['nbResultatsParPageListeHistoStatut' => 100]], $this->json(\count($this->calls) - 1));
+        self::assertStringEndsWith('/v1/consulter/historique', $this->calls[\count($this->calls) - 1][1]);
         self::assertIsArray($found->data['facture']);
         self::assertSame(4321098, $found->data['facture']['identifiantFactureCPP']);
 
@@ -122,7 +126,7 @@ final class ChorusProGatewayTest extends TestCase
     public function testADateItCannotReadIsNoDate(): void
     {
         $json = static fn (string $fixture, string $from, string $to) => new MockResponse(str_replace($from, $to, (string) file_get_contents(__DIR__.'/Fixtures/'.$fixture.'.json')));
-        $gateway = $this->gateway([$json('deposer-flux', '"2026-10-08"', '"08/10/2026 ??"'), $json('rechercher-fournisseur', '"2026-10-08T10:12:00+02:00"', '"hier"')]);
+        $gateway = $this->gateway([$json('deposer-flux', '"2026-10-08"', '"08/10/2026 ??"'), $json('rechercher-fournisseur', '"2026-10-08T10:12:00+02:00"', '"hier"'), 'consulter-historique-erreur']);
 
         $flow = $gateway->submit(self::invoice());
         self::assertSame('CPP0021100000000000000023', $flow->reference);

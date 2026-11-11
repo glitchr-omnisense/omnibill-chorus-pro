@@ -33,6 +33,9 @@ final class Api
     ) {
     }
 
+    /** The routes that write: every other one (rechercher, consulter) reads, though sent as a POST. */
+    public const WRITES = ['/v1/deposer/flux'];
+
     /**
      * @param array<string, mixed> $body
      *
@@ -45,7 +48,7 @@ final class Api
             $answer = Answer::send($this->http, self::PROVIDER, 'POST', $this->apiUrl.$path, [
                 'headers' => ['Authorization' => 'Bearer '.$this->credentials->token(), 'cpro-account' => $this->account, 'Accept' => 'application/json'],
                 'json' => $body,
-            ], $this->backoff);
+            ], $this->backoff, \in_array($path, self::WRITES, true));
             if (401 === $answer->status && 0 === $attempt) {
                 $this->credentials->reset();
                 continue;

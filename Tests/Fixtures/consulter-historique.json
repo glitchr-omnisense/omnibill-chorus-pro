@@ -1,0 +1,16 @@
+{
+  "codeRetour": 0,
+  "libelle": "TRA_MSG_00.000",
+  "idFacture": 4321098,
+  "numeroFacture": "F-2026-042",
+  "modeDepot": "EDI",
+  "statutCourantCode": "MISE_A_DISPOSITION",
+  "historiquesDesStatuts": {
+    "histoStatut": [
+      {"histoStatutId": 3, "histoStatutCode": "MISE_A_DISPOSITION", "histoStatutDatePassage": "2026-10-08T10:12:00+02:00", "histoStatutCommentaire": ""},
+      {"histoStatutId": 1, "histoStatutCode": "DEPOSEE", "histoStatutDatePassage": "2026-10-08T09:58:00+02:00", "histoStatutCommentaire": ""},
+      {"histoStatutId": 2, "histoStatutCode": "EN_COURS_ACHEMINEMENT", "histoStatutDatePassage": "2026-10-08T10:01:00+02:00", "histoStatutCommentaire": ""}
+    ],
+    "pageCouranteHistoStatut": 1, "pagesHistoStatut": 1, "nbResultatsParPageHistoStatut": 100, "totalHistoStatut": 3
+  }
+}

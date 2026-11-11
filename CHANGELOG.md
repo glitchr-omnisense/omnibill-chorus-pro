@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Added
+
+- `fetchStatus()` gives the invoice's whole lifecycle: after `rechercher/fournisseur`,
+  `consulter/historique` on its `identifiantFactureCPP` (Chorus Pro's "Factures" OpenAPI,
+  api_gouv_swaggers, read 2026-11-11) - every status, oldest first, as the flow's history.
+- A 5xx or a timeout to `deposer/flux` is omnibill 1.2's `OutcomeUnknownException`; the searches
+  are reads.
+
 ### Changed
 
 - PHPStan at level max with an empty baseline (`phpstan.neon`, `phpstan-baseline.neon`, as the
