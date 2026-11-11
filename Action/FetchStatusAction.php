@@ -6,6 +6,7 @@ use Omnibill\Action\ActionInterface;
 use Omnibill\Action\ApiAwareInterface;
 use Omnibill\Action\ApiAwareTrait;
 use Omnibill\ChorusPro\Api;
+use Omnibill\ChorusPro\Data;
 use Omnibill\ChorusPro\Statuses;
 use Omnibill\Exception\InvalidConfigException;
 use Omnibill\Model\FlowState;
@@ -47,12 +48,12 @@ final class FetchStatusAction implements ActionInterface, ApiAwareInterface
             return;
         }
         $invoice = $mine[0];
-        $code = isset($invoice['statut']) ? (string) $invoice['statut'] : null;
+        $code = isset($invoice['statut']) ? Data::cast($invoice['statut']) : null;
         $status = Statuses::of($code);
         $at = self::date($invoice['dateHeureEtatCourant'] ?? null);
         $history = $flow->history;
         if (null !== $status && (!$history || $history[array_key_last($history)]->code !== $code)) {
-            $history[] = new StatusChange($status, $number, $at, $invoice['commentaireEtatCourant'] ?? null, code: $code);
+            $history[] = new StatusChange($status, $number, $at, Data::of($invoice)->textOrNull('commentaireEtatCourant'), code: $code);
         }
         $request->setResult($flow->with(state: FlowState::ACCEPTED, status: $status ?? $flow->status, history: $history, updatedAt: $at, data: ['facture' => $invoice] + $flow->data));
     }

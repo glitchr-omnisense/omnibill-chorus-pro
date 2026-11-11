@@ -66,14 +66,14 @@ final class ChorusProGatewayFactory extends GatewayFactory
 
                 return new Api(
                     $http,
-                    new ClientCredentials($http, Api::PROVIDER, (string) ($c->get('oauth_url') ?: ($sandbox ? Api::SANDBOX_OAUTH : Api::OAUTH)), (string) $c['client_id'], (string) $c['client_secret'], 'openid', null, $c->backoff()),
-                    base64_encode($c['login'].':'.$c['password']),
-                    rtrim((string) ($c->get('api_url') ?: ($sandbox ? Api::SANDBOX_API : Api::API)), '/'),
-                    null !== $c->get('user_id') && '' !== $c->get('user_id') ? (int) $c['user_id'] : null,
+                    new ClientCredentials($http, Api::PROVIDER, Data::cast($c->get('oauth_url') ?: ($sandbox ? Api::SANDBOX_OAUTH : Api::OAUTH)), Data::cast($c['client_id']), Data::cast($c['client_secret']), 'openid', null, $c->backoff()),
+                    base64_encode(Data::cast($c['login']).':'.Data::cast($c['password'])),
+                    rtrim(Data::cast($c->get('api_url') ?: ($sandbox ? Api::SANDBOX_API : Api::API)), '/'),
+                    null !== $c->get('user_id') && '' !== $c->get('user_id') ? Data::integer($c['user_id']) : null,
                     $c->backoff(),
                 );
             },
-            'omnibill.action.submit' => static fn (Config $c) => new SubmitAction(array_replace(SubmitAction::defaults(), (array) $c['syntaxes'])),
+            'omnibill.action.submit' => static fn (Config $c) => new SubmitAction(array_replace(SubmitAction::defaults(), Data::textsByKey((array) $c['syntaxes']))),
             'omnibill.action.fetch_status' => new FetchStatusAction(),
         ]);
     }

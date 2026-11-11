@@ -3,6 +3,7 @@
 namespace Omnibill\ChorusPro\Tests;
 
 use Omnibill\ChorusPro\ChorusProGatewayFactory;
+use Omnibill\ChorusPro\Data;
 use Omnibill\ChorusPro\Statuses;
 use Omnibill\Exception\InvalidConfigException;
 use Omnibill\Exception\InvalidKeyException;
@@ -26,10 +27,13 @@ use Symfony\Component\HttpClient\Response\MockResponse;
  */
 final class ChorusProGatewayTest extends TestCase
 {
-    /** @var list<array{string, string, array<string, mixed>}> */
+    /** @var list<array{string, string, array<array-key, mixed>}> */
     private array $calls = [];
 
-    /** @param list<string|MockResponse> $answers */
+    /**
+     * @param list<string|MockResponse> $answers
+     * @param array<string, mixed>      $options
+     */
     private function gateway(array $answers, array $options = []): GatewayInterface
     {
         $http = new MockHttpClient(function (string $method, string $url, array $options) use (&$answers): MockResponse {
@@ -48,6 +52,15 @@ final class ChorusProGatewayTest extends TestCase
         return (new ChorusProGatewayFactory($http))->create($options + ['client_id' => 'piste-app', 'client_secret' => 'piste-secret', 'login' => 'TECH_1_atelier@cpro.fr', 'password' => 'p4ss']);
     }
 
+    /** @return array<mixed> the JSON body of the nth call */
+    private function json(int $call): array
+    {
+        $body = json_decode(Data::cast($this->calls[$call][2]['body'] ?? null), true);
+        self::assertIsArray($body);
+
+        return $body;
+    }
+
     private static function invoice(): Invoice
     {
         return new Invoice('%PDF-1.7 Factur-X', 'F-2026-042.pdf', Syntax::FACTURX, 'F-2026-042');
@@ -60,13 +73,14 @@ final class ChorusProGatewayTest extends TestCase
         self::assertSame(['CPP0021100000000000000023', FlowState::PENDING, 'F-2026-042', '2026-10-08'], [$flow->reference, $flow->state, $flow->invoiceNumber, $flow->submittedAt?->format('Y-m-d')]);
         [$token, $deposit] = $this->calls;
         self::assertSame('https://oauth.piste.gouv.fr/api/oauth/token', $token[1]);
-        parse_str((string) $token[2]['body'], $grant);
+        parse_str(Data::cast($token[2]['body'] ?? null), $grant);
         self::assertSame(['grant_type' => 'client_credentials', 'client_id' => 'piste-app', 'client_secret' => 'piste-secret', 'scope' => 'openid'], $grant);
         self::assertSame(['POST', 'https://api.piste.gouv.fr/cpro/factures/v1/deposer/flux'], [$deposit[0], $deposit[1]]);
-        $headers = implode("\n", $deposit[2]['headers']);
+        self::assertIsArray($deposit[2]['headers']);
+        $headers = implode("\n", array_map(Data::cast(...), $deposit[2]['headers']));
         self::assertStringContainsString('Authorization: Bearer Ex4mpleP1steT0ken', $headers);
         self::assertStringContainsString('cpro-account: '.base64_encode('TECH_1_atelier@cpro.fr:p4ss'), $headers);
-        self::assertSame(['fichierFlux' => base64_encode('%PDF-1.7 Factur-X'), 'nomFichier' => 'F-2026-042.pdf', 'syntaxeFlux' => 'IN_DP_E2_CII_FACTURX', 'avecSignature' => false], json_decode((string) $deposit[2]['body'], true));
+        self::assertSame(['fichierFlux' => base64_encode('%PDF-1.7 Factur-X'), 'nomFichier' => 'F-2026-042.pdf', 'syntaxeFlux' => 'IN_DP_E2_CII_FACTURX', 'avecSignature' => false], $this->json(1));
     }
 
     public function testEachSyntaxHasItsSyntaxeFluxAndTheSandboxItsAddresses(): void
@@ -74,11 +88,11 @@ final class ChorusProGatewayTest extends TestCase
         $this->gateway(['deposer-flux', 'deposer-flux'], ['sandbox' => true, 'user_id' => 42])->submit(new Invoice('<Invoice/>', 'F-1.xml', Syntax::UBL, 'F-1'));
         self::assertSame('https://sandbox-oauth.piste.gouv.fr/api/oauth/token', $this->calls[0][1]);
         self::assertSame('https://sandbox-api.piste.gouv.fr/cpro/factures/v1/deposer/flux', $this->calls[1][1]);
-        self::assertSame(['idUtilisateurCourant' => 42, 'syntaxeFlux' => 'IN_DP_E1_UBL_INVOICE'], array_intersect_key(json_decode((string) $this->calls[1][2]['body'], true), ['idUtilisateurCourant' => 1, 'syntaxeFlux' => 1]));
+        self::assertSame(['idUtilisateurCourant' => 42, 'syntaxeFlux' => 'IN_DP_E1_UBL_INVOICE'], array_intersect_key($this->json(1), ['idUtilisateurCourant' => 1, 'syntaxeFlux' => 1]));
 
         $this->calls = [];
         $this->gateway(['deposer-flux'], ['syntaxes' => ['CII' => 'IN_DP_E2_CII_MIN_16B']])->submit(new Invoice('<x/>', 'F-2.xml', Syntax::CII));
-        self::assertSame('IN_DP_E2_CII_MIN_16B', json_decode((string) $this->calls[1][2]['body'], true)['syntaxeFlux']);
+        self::assertSame('IN_DP_E2_CII_MIN_16B', $this->json(1)['syntaxeFlux']);
 
         $this->expectException(InvalidConfigException::class);
         $this->gateway([])->submit(new Invoice('<x/>', 'CDV.xml', Syntax::CDAR));
@@ -93,7 +107,8 @@ final class ChorusProGatewayTest extends TestCase
         self::assertSame([FlowState::PENDING, null], [$still->state, $still->status], 'not integrated yet');
         $found = $gateway->fetchStatus($flow);
         self::assertSame([FlowState::ACCEPTED, LifecycleStatus::MADE_AVAILABLE, 'MISE_A_DISPOSITION'], [$found->state, $found->status, $found->history[0]->code]);
-        self::assertSame(['numeroFacture' => 'F-2026-042'], json_decode((string) $this->calls[array_key_last($this->calls)][2]['body'], true));
+        self::assertSame(['numeroFacture' => 'F-2026-042'], $this->json(\count($this->calls) - 1));
+        self::assertIsArray($found->data['facture']);
         self::assertSame(4321098, $found->data['facture']['identifiantFactureCPP']);
 
         self::assertSame(LifecycleStatus::REFUSED, Statuses::of('REJETEE'));

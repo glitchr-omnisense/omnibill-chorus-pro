@@ -54,15 +54,15 @@ final class Api
         }
         $data = json_decode($answer->body, true);
         if (\in_array($answer->status, [401, 403], true)) {
-            throw new InvalidKeyException(self::PROVIDER, \sprintf('PISTE or the technical account refused the call (HTTP %d): %s', $answer->status, \is_array($data) ? ($data['libelle'] ?? $data['message'] ?? $data['error'] ?? '') : mb_substr(trim($answer->body), 0, 200)), (string) $answer->status);
+            throw new InvalidKeyException(self::PROVIDER, \sprintf('PISTE or the technical account refused the call (HTTP %d): %s', $answer->status, \is_array($data) ? Data::cast($data['libelle'] ?? $data['message'] ?? $data['error'] ?? '') : mb_substr(trim($answer->body), 0, 200)), (string) $answer->status);
         }
         if (!\is_array($data)) {
             throw new ProviderException(self::PROVIDER, \sprintf('HTTP %d, not a JSON answer: %s', $answer->status, mb_substr(trim($answer->body), 0, 200)));
         }
-        if (0 !== (int) ($data['codeRetour'] ?? -1) || $answer->status >= 400) {
-            throw new ProviderException(self::PROVIDER, \sprintf('%s answered %s: %s', $path, $data['codeRetour'] ?? $answer->status, $data['libelle'] ?? 'no libelle'), isset($data['codeRetour']) ? (string) $data['codeRetour'] : (string) $answer->status);
+        if (0 !== Data::integer($data['codeRetour'] ?? -1) || $answer->status >= 400) {
+            throw new ProviderException(self::PROVIDER, \sprintf('%s answered %s: %s', $path, Data::cast($data['codeRetour'] ?? $answer->status), Data::cast($data['libelle'] ?? 'no libelle')), isset($data['codeRetour']) ? Data::cast($data['codeRetour']) : (string) $answer->status);
         }
 
-        return $data;
+        return Data::map($data);
     }
 }

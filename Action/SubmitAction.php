@@ -6,6 +6,7 @@ use Omnibill\Action\ActionInterface;
 use Omnibill\Action\ApiAwareInterface;
 use Omnibill\Action\ApiAwareTrait;
 use Omnibill\ChorusPro\Api;
+use Omnibill\ChorusPro\Data;
 use Omnibill\Exception\InvalidConfigException;
 use Omnibill\Model\Direction;
 use Omnibill\Model\Flow;
@@ -49,7 +50,7 @@ final class SubmitAction implements ActionInterface, ApiAwareInterface
         // Unread (none, or a form PHP cannot read): the time of the deposit.
         $deposited = self::date($data['dateDepot'] ?? null) ?? new \DateTimeImmutable();
         $request->setResult(new Flow(
-            reference: (string) ($data['numeroFluxDepot'] ?? ''),
+            reference: Data::cast($data['numeroFluxDepot'] ?? ''),
             kind: FlowKind::INVOICE,
             direction: Direction::OUT,
             state: FlowState::PENDING,
