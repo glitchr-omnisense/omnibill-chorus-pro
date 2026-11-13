@@ -23,6 +23,14 @@ services. **Not verified in real: no PISTE account.**
 
 [Documentation](docs/index.md): the options, the routes, the statuses' reading, what was verified.
 
+## Install
+
+```sh
+composer require omnibill/chorus-pro
+```
+
+It brings the family's core, `omnisense/omnibill`, and `omnisense/contracts` with it. **A PISTE application and a Chorus Pro technical account are needed** (both free; a sandbox exists, `sandbox: true`). The tests run on recorded answers.
+
 ## Usage policy
 
 `policy.json`, read on 2026-11-10 in [PISTE's terms](https://piste.gouv.fr/cgu): commercial use
